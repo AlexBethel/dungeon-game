@@ -24,11 +24,12 @@ pub const LEVEL_SIZE: (usize, usize) = (80, 24);
 /// A single level of the dungeon.
 pub struct DungeonLevel {
     /// The tiles at every position in the level.
-    tiles: [[DungeonTile; LEVEL_SIZE.1]; LEVEL_SIZE.0],
+    tiles: [[DungeonTile; LEVEL_SIZE.0]; LEVEL_SIZE.1],
 }
 
 /// The smallest possible independent location in the dungeon,
 /// corresponding to a single character on the screen.
+#[derive(Debug, Clone, Copy)]
 pub enum DungeonTile {
     Floor,
     Wall,
@@ -39,11 +40,23 @@ impl DungeonLevel {
     /// Creates a new level in a branch that has the given
     /// configuration.
     pub fn new(cfg: &BranchConfig) -> Self {
-        todo!()
+        Self {
+            tiles: [[DungeonTile::Floor; LEVEL_SIZE.0]; LEVEL_SIZE.1],
+        }
     }
 
     /// Draws a level on the display window.
     pub fn draw(&self, win: &Window) {
-        todo!()
+        for (y, row) in self.tiles.iter().enumerate() {
+            win.mv(y as _, 0);
+            for tile in row {
+                win.addch(match tile {
+                    DungeonTile::Floor => '.',
+                    DungeonTile::Wall => ' ',
+                    DungeonTile::Hallway => '#',
+                });
+            }
+        }
+        win.mv(0, 0);
     }
 }
