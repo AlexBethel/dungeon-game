@@ -1,3 +1,9 @@
+use pancurses::{endwin, initscr};
+
 fn main() {
-    println!("Hello, world!");
+    let window = initscr();
+    window.printw("Hello World!");
+    window.refresh();
+    window.getch();
+    endwin();
 }
