@@ -24,7 +24,7 @@ use crate::game::{DungeonTile, LEVEL_SIZE};
 /// passages.
 pub fn generate(n_rooms: usize, size: (usize, usize), rng: &mut impl Rng) -> Grid<DungeonTile> {
     let mut grid = Grid::init(size.1, size.0, DungeonTile::Wall);
-    let rooms = gen_room_bounds(n_rooms, size, rng);
+    let rooms = RoomBounds::generate(n_rooms, size, rng);
 
     for room in rooms {
         for (x, y) in room.tiles() {
@@ -58,6 +58,9 @@ pub fn generate_level(
 
     data
 }
+
+/// The possible sizes of a room, on both the x and y axes.
+const ROOM_SIZE_LIMITS: Range<usize> = 4..8;
 
 /// The bounding box of a room.
 struct RoomBounds {
@@ -106,35 +109,32 @@ impl RoomBounds {
             ..*other
         })
     }
-}
 
-/// The possible sizes of a room, on both the x and y axes.
-const ROOM_SIZE_LIMITS: Range<usize> = 4..8;
+    /// Generates bounds for a set of at most `n_rooms` nonoverlapping
+    /// rooms within a region of size `region_size`.
+    fn generate(
+        n_rooms: usize,
+        region_size: (usize, usize),
+        rng: &mut impl Rng,
+    ) -> Vec<Self> {
+        let mut v: Vec<Self> = Vec::new();
 
-/// Generates bounds for a set of at most `n_rooms` nonoverlapping
-/// rooms within a region of size `region_size`.
-fn gen_room_bounds(
-    n_rooms: usize,
-    region_size: (usize, usize),
-    rng: &mut impl Rng,
-) -> Vec<RoomBounds> {
-    let mut v: Vec<RoomBounds> = Vec::new();
+        for _ in 0..n_rooms {
+            let size = (
+                rng.gen_range(ROOM_SIZE_LIMITS),
+                rng.gen_range(ROOM_SIZE_LIMITS),
+            );
+            let ul_corner = (
+                rng.gen_range(0..region_size.0 - size.0),
+                rng.gen_range(0..region_size.1 - size.1),
+            );
 
-    for _ in 0..n_rooms {
-        let size = (
-            rng.gen_range(ROOM_SIZE_LIMITS),
-            rng.gen_range(ROOM_SIZE_LIMITS),
-        );
-        let ul_corner = (
-            rng.gen_range(0..region_size.0 - size.0),
-            rng.gen_range(0..region_size.1 - size.1),
-        );
-
-        let new_room = RoomBounds { ul_corner, size };
-        if v.iter().all(|room| !room.near(&new_room, 2)) {
-            v.push(new_room)
+            let new_room = Self { ul_corner, size };
+            if v.iter().all(|room| !room.near(&new_room, 2)) {
+                v.push(new_room)
+            }
         }
-    }
 
-    v
+        v
+    }
 }
