@@ -2,6 +2,7 @@ use game::{BranchConfig, DungeonLevel};
 use pancurses::{endwin, initscr};
 
 mod game;
+mod rooms;
 
 fn main() {
     let window = initscr();

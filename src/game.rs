@@ -1,5 +1,7 @@
 use pancurses::Window;
 
+use crate::rooms;
+
 /// A dungeon root.
 pub struct Dungeon {
     main_branch: DungeonBranch,
@@ -27,7 +29,7 @@ pub struct DungeonLevel {
     tiles: [[DungeonTile; LEVEL_SIZE.0]; LEVEL_SIZE.1],
 }
 
-/// The smallest possible independent location in the dungeon,
+/// The smallest measurable independent location in the dungeon,
 /// corresponding to a single character on the screen.
 #[derive(Debug, Clone, Copy)]
 pub enum DungeonTile {
@@ -41,7 +43,8 @@ impl DungeonLevel {
     /// configuration.
     pub fn new(cfg: &BranchConfig) -> Self {
         Self {
-            tiles: [[DungeonTile::Floor; LEVEL_SIZE.0]; LEVEL_SIZE.1],
+            // tiles: [[DungeonTile::Floor; LEVEL_SIZE.0]; LEVEL_SIZE.1],
+            tiles: rooms::generate_level(30, &mut rand::thread_rng()),
         }
     }
 
@@ -57,6 +60,8 @@ impl DungeonLevel {
                 });
             }
         }
+
+        // Leave the cursor at the lower-left.
         win.mv(0, 0);
     }
 }
