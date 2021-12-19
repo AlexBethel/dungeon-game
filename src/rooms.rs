@@ -72,10 +72,10 @@ impl RoomBounds {
             }
         }
 
-        !range_overlapping(
+        range_overlapping(
             self.ul_corner.0..self.ul_corner.0 + self.size.0,
             other.ul_corner.0..other.ul_corner.0 + other.size.0,
-        ) && !range_overlapping(
+        ) && range_overlapping(
             self.ul_corner.1..self.ul_corner.1 + self.size.1,
             other.ul_corner.1..other.ul_corner.1 + other.size.1,
         )
