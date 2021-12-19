@@ -62,8 +62,9 @@ impl RoomBounds {
         (y_min..y_max).flat_map(move |y| (x_min..x_max).map(move |x| (x, y)))
     }
 
-    /// Returns whether the two rooms are overlapping.
-    pub fn overlapping(&self, other: &Self) -> bool {
+    /// Returns whether the two rooms are overlapping, i.e., there
+    /// exists at least one tile that is contained in both rooms.
+    pub fn intersects(&self, other: &Self) -> bool {
         fn range_overlapping(a: Range<usize>, b: Range<usize>) -> bool {
             if a.start > b.start {
                 range_overlapping(b, a)
@@ -79,6 +80,19 @@ impl RoomBounds {
             self.ul_corner.1..self.ul_corner.1 + self.size.1,
             other.ul_corner.1..other.ul_corner.1 + other.size.1,
         )
+    }
+
+    /// Returns whether the two rooms are within distance `dist` of
+    /// one another or intersecting.
+    pub fn near(&self, other: &Self, dist: usize) -> bool {
+        RoomBounds {
+            size: (self.size.0 + dist, self.size.1 + dist),
+            ..*self
+        }
+        .intersects(&RoomBounds {
+            size: (other.size.0 + dist, other.size.1 + dist),
+            ..*other
+        })
     }
 }
 
@@ -105,7 +119,7 @@ fn gen_room_bounds(
         );
 
         let new_room = RoomBounds { ul_corner, size };
-        if v.iter().all(|room| !room.overlapping(&new_room)) {
+        if v.iter().all(|room| !room.near(&new_room, 2)) {
             v.push(new_room)
         }
     }
