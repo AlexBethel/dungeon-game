@@ -1,5 +1,17 @@
 //! Generator for levels that consist of a number of rooms connected
 //! by hallways.
+//!
+//! The basic strategy here is that we start off by making some number
+//! of attempts to place rectangular rooms of random sizes and
+//! positions within the region; of these attempts, we only keep those
+//! that are spread some distance away from other existing rooms. We
+//! then use a pathfinding algorithm to navigate from one room to all
+//! the others, leaving hallways and doors as we travel. The
+//! pathfinding algorithm is weighted to try and travel through
+//! existing rooms and hallways rather than cutting new hallways
+//! through the stone to encourage rooms to connect to other rooms
+//! near them, and it has some randomness added to its weights to
+//! discourage long, linear hallways.
 
 use std::ops::Range;
 
