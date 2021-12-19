@@ -43,7 +43,6 @@ impl DungeonLevel {
     /// configuration.
     pub fn new(cfg: &BranchConfig) -> Self {
         Self {
-            // tiles: [[DungeonTile::Floor; LEVEL_SIZE.0]; LEVEL_SIZE.1],
             tiles: rooms::generate_level(30, &mut rand::thread_rng()),
         }
     }

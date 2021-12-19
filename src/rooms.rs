@@ -10,9 +10,9 @@ use crate::game::{DungeonTile, LEVEL_SIZE};
 
 /// Generates a grid of the given size containing rooms connected by
 /// passages.
-pub fn generate(n_rooms: usize, rng: &mut impl Rng, size: (usize, usize)) -> Grid<DungeonTile> {
+pub fn generate(n_rooms: usize, size: (usize, usize), rng: &mut impl Rng) -> Grid<DungeonTile> {
     let mut grid = Grid::init(size.1, size.0, DungeonTile::Wall);
-    let rooms = gen_room_bounds(n_rooms, size, rng); // TODO: arg order
+    let rooms = gen_room_bounds(n_rooms, size, rng);
 
     for room in rooms {
         for (x, y) in room.tiles() {
@@ -32,7 +32,7 @@ pub fn generate_level(
     // when we theoretically doesn't need to (we get a heap-allocated
     // Grid back, when we know statically that it's LEVEL_SIZE so we
     // could allocate it on the stack)...
-    let grid = generate(n_rooms, rng, LEVEL_SIZE);
+    let grid = generate(n_rooms, LEVEL_SIZE, rng);
 
     // ...and then we use a pointless default of DungeonTile::Floor
     // here then copy in the real data from `grid`.
