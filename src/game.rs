@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use pancurses::Window;
 
 use crate::rooms;
@@ -31,7 +33,7 @@ pub struct DungeonLevel {
 
 /// The smallest measurable independent location in the dungeon,
 /// corresponding to a single character on the screen.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DungeonTile {
     Floor,
     Wall,
@@ -41,9 +43,9 @@ pub enum DungeonTile {
 impl DungeonLevel {
     /// Creates a new level in a branch that has the given
     /// configuration.
-    pub fn new(cfg: &BranchConfig) -> Self {
+    pub fn new(_cfg: &BranchConfig) -> Self {
         Self {
-            tiles: rooms::generate_level(30, &mut rand::thread_rng()),
+            tiles: rooms::generate_level(100, &mut rand::thread_rng()),
         }
     }
 
@@ -62,5 +64,27 @@ impl DungeonLevel {
 
         // Leave the cursor at the lower-left.
         win.mv(0, 0);
+    }
+}
+
+impl Display for DungeonLevel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for row in self.tiles.iter() {
+            for tile in row {
+                write!(
+                    f,
+                    "{}",
+                    match tile {
+                        DungeonTile::Floor => '.',
+                        DungeonTile::Wall => ' ',
+                        DungeonTile::Hallway => '#',
+                    }
+                )?;
+            }
+
+            write!(f, "\n")?;
+        }
+
+        Ok(())
     }
 }

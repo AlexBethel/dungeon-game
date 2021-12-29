@@ -13,8 +13,14 @@
 //! near them, and it has some randomness added to its weights to
 //! discourage long, linear hallways.
 
-use std::ops::Range;
+use std::{
+    collections::{hash_map::Entry, HashMap, HashSet},
+    hash::Hash,
+    iter::successors,
+    ops::Range,
+};
 
+use float_ord::FloatOrd;
 use grid::Grid;
 use rand::Rng;
 
@@ -26,11 +32,13 @@ pub fn generate(n_rooms: usize, size: (usize, usize), rng: &mut impl Rng) -> Gri
     let mut grid = Grid::init(size.1, size.0, DungeonTile::Wall);
     let rooms = RoomBounds::generate(n_rooms, size, rng);
 
-    for room in rooms {
+    for room in rooms.iter() {
         for (x, y) in room.tiles() {
             grid[y][x] = DungeonTile::Floor;
         }
     }
+
+    cut_hallways(&mut grid, &rooms, rng);
 
     grid
 }
@@ -112,11 +120,7 @@ impl RoomBounds {
 
     /// Generates bounds for a set of at most `n_rooms` nonoverlapping
     /// rooms within a region of size `region_size`.
-    fn generate(
-        n_rooms: usize,
-        region_size: (usize, usize),
-        rng: &mut impl Rng,
-    ) -> Vec<Self> {
+    fn generate(n_rooms: usize, region_size: (usize, usize), rng: &mut impl Rng) -> Vec<Self> {
         let mut v: Vec<Self> = Vec::new();
 
         for _ in 0..n_rooms {
@@ -137,4 +141,135 @@ impl RoomBounds {
 
         v
     }
+
+    /// Calculates the approximate center of a room.
+    fn center(&self) -> (usize, usize) {
+        (
+            self.ul_corner.0 + self.size.0 / 2,
+            self.ul_corner.1 + self.size.1 / 2,
+        )
+    }
+}
+
+/// Factor to encourage routes to travel through existing rooms rather
+/// than cutting new hallways. 0.0 very strongly encourages traveling
+/// through rooms, 1.0 is indifferent to the existence of rooms, and
+/// higher values discourage traveling through rooms (hallways will
+/// wrap around rooms rather than enter them).
+const ROOM_WEIGHT: f64 = 0.5;
+
+/// Randomness factor to avoid straight lines in hallways.
+const HALLWAY_RANDOMNESS: f64 = 0.6;
+
+/// Adds a set of hallways connecting the given rooms to a dungeon.
+fn cut_hallways(grid: &mut Grid<DungeonTile>, rooms: &[RoomBounds], rng: &mut impl Rng) {
+    // How hard we try to avoid traveling through stone at a pair of
+    // coordinates.
+    let mut stone_weights = Grid::new(grid.rows(), grid.cols());
+    for elem in stone_weights.iter_mut() {
+        *elem = rng.gen_range(1.0 - HALLWAY_RANDOMNESS..1.0 + HALLWAY_RANDOMNESS);
+    }
+
+    let size = (grid.cols(), grid.rows());
+    let origin = rooms[0].center();
+
+    for other in rooms.iter().skip(1) {
+        let neighbors = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+        for (x, y) in pathfind(
+            |node| {
+                let (x, y) = (node.0 as isize, node.1 as isize);
+                neighbors
+                    .iter()
+                    .map(move |(dx, dy)| (x + dx, y + dy))
+                    .filter_map(|(x, y)| {
+                        if (0..size.0 as isize).contains(&x) && (0..size.1 as isize).contains(&y) {
+                            Some((
+                                (x as usize, y as usize),
+                                match grid[y as usize][x as usize] {
+                                    DungeonTile::Wall => stone_weights[y as usize][x as usize],
+                                    _ => ROOM_WEIGHT,
+                                },
+                            ))
+                        } else {
+                            None
+                        }
+                    })
+            },
+            origin,
+            other.center(),
+        )
+        .expect("graph is connected, must therefore be navigable")
+        {
+            if grid[y][x] == DungeonTile::Wall {
+                grid[y][x] = DungeonTile::Hallway;
+            }
+        }
+    }
+}
+
+/// Finds a route from the nodes `from` to `to` on a graph, where the
+/// edges and weights connected to a particular node are given by the
+/// `edge_weights` function. Returns a vector of the nodes visited.
+///
+/// At the moment this is a horribly unoptimized Dijkstra's algorithm.
+/// Should definitely swap this out for something more efficient.
+fn pathfind<Node, EdgeWeights>(
+    mut edge_weights: impl FnMut(Node) -> EdgeWeights,
+    from: Node,
+    to: Node,
+) -> Option<Vec<Node>>
+where
+    EdgeWeights: Iterator<Item = (Node, f64)>,
+    Node: Clone + Eq + Hash,
+{
+    let mut distances = HashMap::<Node, FloatOrd<f64>>::new();
+    let mut visited = HashSet::<Node>::new();
+    let mut parents = HashMap::<Node, Node>::new();
+
+    distances.insert(from, FloatOrd(0.0));
+    loop {
+        // Next node to visit is the unvisited node with the lowest
+        // distance.
+        let (current, current_dist) = match distances
+            .iter()
+            .filter(|(node, _distance)| !visited.contains(node))
+            .min_by_key(|(_node, distance)| *distance)
+        {
+            Some((current, FloatOrd(current_dist))) => (current.to_owned(), *current_dist),
+            None => {
+                // Every reachable node has been visited and the
+                // target node hasn't been reached, therefore no route
+                // exists.
+                return None;
+            }
+        };
+
+        if current == to {
+            // We've reached the destination.
+            break;
+        }
+
+        // Find the most efficient routes to unexplored neighbors.
+        for (neighbor, weight) in edge_weights(current.to_owned()) {
+            let neighbor_dist = current_dist + weight;
+            match distances.entry(neighbor.to_owned()) {
+                Entry::Occupied(mut slot) => {
+                    if neighbor_dist < slot.get().0 {
+                        *slot.get_mut() = FloatOrd(neighbor_dist);
+                        parents.insert(neighbor.clone(), current.clone());
+                    }
+                }
+                Entry::Vacant(slot) => {
+                    slot.insert(FloatOrd(weight + current_dist));
+                    parents.insert(neighbor.clone(), current.clone());
+                }
+            }
+        }
+
+        visited.insert(current);
+    }
+
+    let mut nodes: Vec<_> = successors(Some(to), |last| parents.get(last).cloned()).collect();
+    nodes.reverse();
+    Some(nodes)
 }
