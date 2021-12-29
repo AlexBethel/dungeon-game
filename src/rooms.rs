@@ -70,6 +70,10 @@ pub fn generate_level(
 /// The possible sizes of a room, on both the x and y axes.
 const ROOM_SIZE_LIMITS: Range<usize> = 4..8;
 
+/// The minimum distance between the interiors of 2 rooms. Should be
+/// at least 1 to ensure that walls generate.
+const ROOM_MIN_DISTANCE: usize = 4;
+
 /// The bounding box of a room.
 struct RoomBounds {
     ul_corner: (usize, usize),
@@ -134,7 +138,7 @@ impl RoomBounds {
             );
 
             let new_room = Self { ul_corner, size };
-            if v.iter().all(|room| !room.near(&new_room, 2)) {
+            if v.iter().all(|room| !room.near(&new_room, ROOM_MIN_DISTANCE)) {
                 v.push(new_room)
             }
         }
