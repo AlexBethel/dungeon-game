@@ -51,34 +51,68 @@ impl DungeonLevel {
 
     /// Draws a level on the display window.
     pub fn draw(&self, win: &Window) {
-        for (y, row) in self.tiles.iter().enumerate() {
+        for y in 0..LEVEL_SIZE.1 {
             win.mv(y as _, 0);
-            for tile in row {
-                win.addch(match tile {
-                    DungeonTile::Floor => '.',
-                    DungeonTile::Wall => ' ',
-                    DungeonTile::Hallway => '#',
-                });
+            for x in 0..LEVEL_SIZE.0 {
+                win.addch(self.render_tile(x, y));
             }
         }
 
         // Leave the cursor at the lower-left.
         win.mv(0, 0);
     }
+
+    /// Renders the tile at the given coordinates.
+    pub fn render_tile(&self, x: usize, y: usize) -> char {
+        match self.tiles[y][x] {
+            DungeonTile::Floor => '.',
+            DungeonTile::Wall => {
+                // Don't render walls with no adjacent floor space, to
+                // keep the screen clear. Aside from that, walls are
+                // '-' by default, unless the only adjacent floor is
+                // to the east or west, in which case they are '|'.
+
+                let neighborhood = (-1..=1)
+                    .flat_map(|row| (-1..=1).map(move |col| (col, row)))
+                    .filter(|&(dx, dy)| !(dx == 0 && dy == 0))
+                    .filter_map(|(dx, dy)| {
+                        let (x, y) = (
+                            usize::try_from(x as isize + dx).ok()?,
+                            usize::try_from(y as isize + dy).ok()?,
+                        );
+                        Some((x, y, self.tiles.get(y)?.get(x)?))
+                    })
+                    .collect::<Vec<(usize, usize, &DungeonTile)>>();
+
+                if neighborhood
+                    .iter()
+                    .all(|(_x, _y, tile)| *tile != &DungeonTile::Floor)
+                {
+                    ' '
+                } else {
+                    if neighborhood
+                        .iter()
+                        .any(|(tile_x, _y, tile)| *tile_x == x && *tile == &DungeonTile::Floor)
+                    {
+                        '-'
+                    } else {
+                        '|'
+                    }
+                }
+            }
+            DungeonTile::Hallway => '#',
+        }
+    }
 }
 
 impl Display for DungeonLevel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for row in self.tiles.iter() {
-            for tile in row {
+        for y in 0..LEVEL_SIZE.1 {
+            for x in 0..LEVEL_SIZE.0 {
                 write!(
                     f,
                     "{}",
-                    match tile {
-                        DungeonTile::Floor => '.',
-                        DungeonTile::Wall => ' ',
-                        DungeonTile::Hallway => '#',
-                    }
+                    self.render_tile(x, y)
                 )?;
             }
 
