@@ -5,9 +5,9 @@
 //! of attempts to place rectangular rooms of random sizes and
 //! positions within the region; of these attempts, we only keep those
 //! that are spread some distance away from other existing rooms. We
-//! then use a pathfinding algorithm to navigate from one room to all
-//! the others, leaving hallways and doors as we travel. The
-//! pathfinding algorithm is weighted to try and travel through
+//! then use a pathfinding algorithm to navigate from each room to the
+//! one generated after it, leaving hallways and doors as we travel.
+//! The pathfinding algorithm is weighted to try and travel through
 //! existing rooms and hallways rather than cutting new hallways
 //! through the stone to encourage rooms to connect to other rooms
 //! near them, and it has some randomness added to its weights to
@@ -175,10 +175,12 @@ fn cut_hallways(grid: &mut Grid<DungeonTile>, rooms: &[RoomBounds], rng: &mut im
     }
 
     let size = (grid.cols(), grid.rows());
-    let origin = rooms[0].center();
 
-    for other in rooms.iter().skip(1) {
+    // Make hallways between pairs of adjacent rooms.
+    for rooms in rooms.windows(2) {
+        let (from, to) = (&rooms[0], &rooms[1]);
         let neighbors = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+
         for (x, y) in pathfind(
             |node| {
                 let (x, y) = (node.0 as isize, node.1 as isize);
@@ -199,8 +201,8 @@ fn cut_hallways(grid: &mut Grid<DungeonTile>, rooms: &[RoomBounds], rng: &mut im
                         }
                     })
             },
-            origin,
-            other.center(),
+            from.center(),
+            to.center(),
         )
         .expect("graph is connected, must therefore be navigable")
         {
