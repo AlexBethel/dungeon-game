@@ -26,6 +26,23 @@ use rand::Rng;
 
 use crate::game::{DungeonTile, LEVEL_SIZE};
 
+/// The possible sizes of a room, on both the x and y axes.
+const ROOM_SIZE_LIMITS: Range<usize> = 4..8;
+
+/// The minimum distance between the interiors of 2 rooms. Should be
+/// at least 1 to ensure that walls generate.
+const ROOM_MIN_DISTANCE: usize = 4;
+
+/// Factor to encourage routes to travel through existing rooms rather
+/// than cutting new hallways. 0.0 very strongly encourages traveling
+/// through rooms, 1.0 is indifferent to the existence of rooms, and
+/// higher values discourage traveling through rooms (hallways will
+/// wrap around rooms rather than enter them).
+const ROOM_WEIGHT: f64 = 0.5;
+
+/// Randomness factor to avoid straight lines in hallways.
+const HALLWAY_RANDOMNESS: f64 = 0.6;
+
 /// Generates a grid of the given size containing rooms connected by
 /// passages.
 pub fn generate(n_rooms: usize, size: (usize, usize), rng: &mut impl Rng) -> Grid<DungeonTile> {
@@ -66,13 +83,6 @@ pub fn generate_level(
 
     data
 }
-
-/// The possible sizes of a room, on both the x and y axes.
-const ROOM_SIZE_LIMITS: Range<usize> = 4..8;
-
-/// The minimum distance between the interiors of 2 rooms. Should be
-/// at least 1 to ensure that walls generate.
-const ROOM_MIN_DISTANCE: usize = 4;
 
 /// The bounding box of a room.
 struct RoomBounds {
@@ -156,16 +166,6 @@ impl RoomBounds {
         )
     }
 }
-
-/// Factor to encourage routes to travel through existing rooms rather
-/// than cutting new hallways. 0.0 very strongly encourages traveling
-/// through rooms, 1.0 is indifferent to the existence of rooms, and
-/// higher values discourage traveling through rooms (hallways will
-/// wrap around rooms rather than enter them).
-const ROOM_WEIGHT: f64 = 0.5;
-
-/// Randomness factor to avoid straight lines in hallways.
-const HALLWAY_RANDOMNESS: f64 = 0.6;
 
 /// Adds a set of hallways connecting the given rooms to a dungeon.
 fn cut_hallways(grid: &mut Grid<DungeonTile>, rooms: &[RoomBounds], rng: &mut impl Rng) {
