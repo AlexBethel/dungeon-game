@@ -33,6 +33,11 @@ const ROOM_SIZE_LIMITS: Range<usize> = 4..8;
 /// at least 1 to ensure that walls generate.
 const ROOM_MIN_DISTANCE: usize = 4;
 
+/// The minimum distance between the interior of a room and the edge
+/// of the map. Should be at least 1 to ensure that all rooms have
+/// walls.
+const ROOM_MARGIN: usize = 2;
+
 /// Factor to encourage routes to travel through existing rooms rather
 /// than cutting new hallways. 0.0 very strongly encourages traveling
 /// through rooms, 1.0 is indifferent to the existence of rooms, and
@@ -143,8 +148,8 @@ impl RoomBounds {
                 rng.gen_range(ROOM_SIZE_LIMITS),
             );
             let ul_corner = (
-                rng.gen_range(0..region_size.0 - size.0),
-                rng.gen_range(0..region_size.1 - size.1),
+                rng.gen_range(ROOM_MARGIN..region_size.0 - size.0 - ROOM_MARGIN),
+                rng.gen_range(ROOM_MARGIN..region_size.1 - size.1 - ROOM_MARGIN),
             );
 
             let new_room = Self { ul_corner, size };
