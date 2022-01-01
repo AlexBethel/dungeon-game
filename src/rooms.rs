@@ -138,7 +138,9 @@ impl RoomBounds {
             );
 
             let new_room = Self { ul_corner, size };
-            if v.iter().all(|room| !room.near(&new_room, ROOM_MIN_DISTANCE)) {
+            if v.iter()
+                .all(|room| !room.near(&new_room, ROOM_MIN_DISTANCE))
+            {
                 v.push(new_room)
             }
         }

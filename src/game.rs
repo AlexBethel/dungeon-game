@@ -109,11 +109,7 @@ impl Display for DungeonLevel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for y in 0..LEVEL_SIZE.1 {
             for x in 0..LEVEL_SIZE.0 {
-                write!(
-                    f,
-                    "{}",
-                    self.render_tile(x, y)
-                )?;
+                write!(f, "{}", self.render_tile(x, y))?;
             }
 
             write!(f, "\n")?;
