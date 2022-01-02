@@ -3,6 +3,7 @@ use pancurses::{endwin, initscr};
 
 mod game;
 mod rooms;
+mod util;
 
 fn main() {
     let window = initscr();
