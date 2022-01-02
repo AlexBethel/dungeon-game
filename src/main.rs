@@ -1,8 +1,8 @@
-use components::{register_all, CharRender, Position};
+use components::{register_all, CharRender, Player, Position, TurnTaker};
 use game::{BranchConfig, DungeonLevel};
 
 use specs::prelude::*;
-use systems::IOSystem;
+use systems::{IOSystem, TurnTickSystem};
 
 mod components;
 mod game;
@@ -24,10 +24,16 @@ fn main() {
         .create_entity()
         .with(Position { x: 5, y: 6 })
         .with(CharRender { glyph: '@' })
+        .with(Player)
+        .with(TurnTaker {
+            next: 0,
+            maximum: 10,
+        })
         .build();
 
     let mut dispatcher = DispatcherBuilder::new()
-        .with(IOSystem::new(), "render_system", &[])
+        .with(TurnTickSystem, "turn_tick", &[])
+        .with(IOSystem::new(), "render", &["turn_tick"])
         .build();
 
     loop {

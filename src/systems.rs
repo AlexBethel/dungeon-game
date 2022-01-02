@@ -7,7 +7,7 @@ use pancurses::{endwin, initscr, Window};
 use specs::prelude::*;
 
 use crate::{
-    components::{CharRender, Position},
+    components::{CharRender, Player, Position, TurnTaker},
     game::DungeonLevel,
 };
 
@@ -51,9 +51,13 @@ impl<'a> System<'a> for IOSystem {
         ReadExpect<'a, DungeonLevel>,
         ReadStorage<'a, CharRender>,
         ReadStorage<'a, Position>,
+        ReadStorage<'a, Player>,
+        ReadStorage<'a, TurnTaker>,
     );
 
-    fn run(&mut self, (level, renderables, positions): Self::SystemData) {
+    fn run(&mut self, (level, renderables, positions, players, turns): Self::SystemData) {
+        self.window.clear();
+
         // Draw the base level.
         level.draw(&self.window);
 
@@ -64,10 +68,28 @@ impl<'a> System<'a> for IOSystem {
 
         // Leave the cursor at the lower-left.
         self.window.mv(0, 0);
-        self.window.refresh();
 
-        // For now, just get a character to avoid redrawing over and
-        // over.
-        self.window.getch();
+        // On the player's turn, read input.
+        for (_player, turn) in (&players, &turns).join() {
+            if turn.next == 0 {
+                self.window.refresh();
+                self.window.getch();
+            }
+        }
+    }
+}
+
+/// System for ticking the turn counter on every entity; this system
+/// implements the relationship between real-world time and in-game
+/// time.
+pub struct TurnTickSystem;
+
+impl<'a> System<'a> for TurnTickSystem {
+    type SystemData = WriteStorage<'a, TurnTaker>;
+
+    fn run(&mut self, mut turn_takers: Self::SystemData) {
+        for ent in (&mut turn_takers).join() {
+            ent.next = ent.next.checked_sub(1).unwrap_or(ent.maximum);
+        }
     }
 }
