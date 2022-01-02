@@ -86,15 +86,13 @@ impl DungeonLevel {
                     .all(|(_x, _y, tile)| *tile != &DungeonTile::Floor)
                 {
                     ' '
+                } else if neighborhood
+                    .iter()
+                    .any(|(tile_x, _y, tile)| *tile_x == x && *tile == &DungeonTile::Floor)
+                {
+                    '-'
                 } else {
-                    if neighborhood
-                        .iter()
-                        .any(|(tile_x, _y, tile)| *tile_x == x && *tile == &DungeonTile::Floor)
-                    {
-                        '-'
-                    } else {
-                        '|'
-                    }
+                    '|'
                 }
             }
             DungeonTile::Hallway => '#',
@@ -109,7 +107,7 @@ impl Display for DungeonLevel {
                 write!(f, "{}", self.render_tile(x, y))?;
             }
 
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
 
         Ok(())

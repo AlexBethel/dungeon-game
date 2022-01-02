@@ -1,4 +1,4 @@
-use components::{register_all, Position, CharRender};
+use components::{register_all, CharRender, Position};
 use game::{BranchConfig, DungeonLevel};
 
 use specs::prelude::*;
@@ -31,6 +31,6 @@ fn main() {
         .build();
 
     loop {
-        dispatcher.dispatch(&mut world);
+        dispatcher.dispatch(&world);
     }
 }

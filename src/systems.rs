@@ -1,12 +1,15 @@
 //! ECS systems.
 
-use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use lazy_static::lazy_static;
-use pancurses::{Window, endwin, initscr};
+use pancurses::{endwin, initscr, Window};
 use specs::prelude::*;
 
-use crate::{components::{Position, CharRender}, game::DungeonLevel};
+use crate::{
+    components::{CharRender, Position},
+    game::DungeonLevel,
+};
 
 /// System for drawing the state of the game, and potentially waiting
 /// (blocking) for user input.
@@ -15,18 +18,16 @@ pub struct IOSystem {
 }
 
 lazy_static! {
-    static ref WINDOW_INITIALIZED: Mutex<bool> = Mutex::new(false);
+    static ref WINDOW_INITIALIZED: AtomicBool = AtomicBool::new(false);
 }
 
 impl IOSystem {
     pub fn new() -> Self {
-        let mut init = WINDOW_INITIALIZED.lock().unwrap();
-        if *init {
-            // See the note on `impl Send for IOSystem`.
+        // See the note on `impl Send for IOSystem`.
+        if WINDOW_INITIALIZED.swap(true, Ordering::Relaxed) {
             panic!("Refusing to initialize the renderer twice");
         }
 
-        *init = true;
         Self { window: initscr() }
     }
 }
@@ -34,7 +35,7 @@ impl IOSystem {
 impl Drop for IOSystem {
     fn drop(&mut self) {
         endwin();
-        *WINDOW_INITIALIZED.lock().unwrap() = false;
+        WINDOW_INITIALIZED.store(false, Ordering::Relaxed);
     }
 }
 
@@ -70,4 +71,3 @@ impl<'a> System<'a> for IOSystem {
         self.window.getch();
     }
 }
-
