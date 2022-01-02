@@ -1,19 +1,36 @@
+use components::{register_all, Position, CharRender};
 use game::{BranchConfig, DungeonLevel};
-use pancurses::{endwin, initscr};
 
+use specs::prelude::*;
+use systems::IOSystem;
+
+mod components;
 mod game;
 mod rooms;
+mod systems;
 mod util;
 
 fn main() {
-    let window = initscr();
+    let mut world = World::new();
+
+    register_all(&mut world);
 
     let cfg = BranchConfig;
     let level = DungeonLevel::new(&cfg);
 
-    level.draw(&window);
-    window.refresh();
-    window.getch();
+    world.insert(level);
 
-    endwin();
+    world
+        .create_entity()
+        .with(Position { x: 5, y: 6 })
+        .with(CharRender { glyph: '@' })
+        .build();
+
+    let mut dispatcher = DispatcherBuilder::new()
+        .with(IOSystem::new(), "render_system", &[])
+        .build();
+
+    loop {
+        dispatcher.dispatch(&mut world);
+    }
 }

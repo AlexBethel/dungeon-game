@@ -57,9 +57,6 @@ impl DungeonLevel {
                 win.addch(self.render_tile(x, y));
             }
         }
-
-        // Leave the cursor at the lower-left.
-        win.mv(0, 0);
     }
 
     /// Renders the tile at the given coordinates.
