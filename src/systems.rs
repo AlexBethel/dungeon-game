@@ -37,8 +37,8 @@ impl<'a> System<'a> for MobSystem {
             match mob.next_action {
                 MobAction::Nop => {}
                 MobAction::Move(dx, dy) => {
-                    pos.x = (pos.x as i32 + dx) as _;
-                    pos.y = (pos.y as i32 + dy) as _;
+                    pos.x = pos.x + dx;
+                    pos.y = pos.y + dy;
                 }
             }
 

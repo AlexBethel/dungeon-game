@@ -6,8 +6,8 @@ use specs_derive::Component;
 /// Entities that have a physical position in the world.
 #[derive(Component)]
 pub struct Position {
-    pub x: usize,
-    pub y: usize,
+    pub x: i32,
+    pub y: i32,
 }
 
 /// Entities that need to be drawn as a single character.
