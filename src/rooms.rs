@@ -20,7 +20,7 @@ use pathfinding::directed::astar::astar;
 use rand::Rng;
 
 use crate::{
-    game::{DungeonTile, LEVEL_SIZE},
+    game::{DungeonLevel, DungeonTile, LEVEL_SIZE},
     util::NiceFloat,
 };
 
@@ -48,7 +48,13 @@ const HALLWAY_RANDOMNESS: f64 = 0.6;
 
 /// Generates a grid of the given size containing rooms connected by
 /// passages.
-pub fn generate(n_rooms: usize, size: (usize, usize), rng: &mut impl Rng) -> Grid<DungeonTile> {
+pub fn generate(
+    n_rooms: usize,
+    size: (usize, usize),
+    rng: &mut impl Rng,
+    upstairs: usize,
+    downstairs: usize,
+) -> (Grid<DungeonTile>, Vec<(i32, i32)>, Vec<(i32, i32)>) {
     let mut grid = Grid::init(size.1, size.0, DungeonTile::Wall);
     let rooms = RoomBounds::generate(n_rooms, size, rng);
 
@@ -58,21 +64,24 @@ pub fn generate(n_rooms: usize, size: (usize, usize), rng: &mut impl Rng) -> Gri
         }
     }
 
-    cut_hallways(&mut grid, &rooms, rng);
+    add_hallways(&mut grid, &rooms, rng);
+    let (upstairs, downstairs) = add_stairs(&mut grid, upstairs, downstairs, rng);
 
-    grid
+    (grid, upstairs, downstairs)
 }
 
 /// Generates a grid of the statically-known level size.
 pub fn generate_level(
     n_rooms: usize,
     rng: &mut impl Rng,
-) -> [[DungeonTile; LEVEL_SIZE.0]; LEVEL_SIZE.1] {
+    upstairs: usize,
+    downstairs: usize,
+) -> DungeonLevel {
     // FIXME: This function is atrocious. We do an allocation here
     // when we theoretically doesn't need to (we get a heap-allocated
     // Grid back, when we know statically that it's LEVEL_SIZE so we
     // could allocate it on the stack)...
-    let grid = generate(n_rooms, LEVEL_SIZE, rng);
+    let (grid, upstairs, downstairs) = generate(n_rooms, LEVEL_SIZE, rng, upstairs, downstairs);
 
     // ...and then we use a pointless default of DungeonTile::Floor
     // here then copy in the real data from `grid`.
@@ -84,7 +93,7 @@ pub fn generate_level(
         *slot = value;
     }
 
-    data
+    DungeonLevel::from_raw_parts(data, upstairs, downstairs)
 }
 
 /// The bounding box of a room.
@@ -171,7 +180,7 @@ impl RoomBounds {
 }
 
 /// Adds a set of hallways connecting the given rooms to a dungeon.
-fn cut_hallways(grid: &mut Grid<DungeonTile>, rooms: &[RoomBounds], rng: &mut impl Rng) {
+fn add_hallways(grid: &mut Grid<DungeonTile>, rooms: &[RoomBounds], rng: &mut impl Rng) {
     // How hard we try to avoid traveling through stone at a pair of
     // coordinates.
     let mut stone_weights = Grid::new(grid.rows(), grid.cols());
@@ -236,6 +245,44 @@ fn cut_hallways(grid: &mut Grid<DungeonTile>, rooms: &[RoomBounds], rng: &mut im
             if grid[y][x] == DungeonTile::Wall {
                 grid[y][x] = DungeonTile::Hallway;
             }
+        }
+    }
+}
+
+/// Adds staircases leading upwards and downwards to the level.
+fn add_stairs(
+    grid: &mut Grid<DungeonTile>,
+    n_upstairs: usize,
+    n_downstairs: usize,
+    rng: &mut impl Rng,
+) -> (Vec<(i32, i32)>, Vec<(i32, i32)>) {
+    let (mut upstairs, mut downstairs) = (
+        Vec::with_capacity(n_upstairs),
+        Vec::with_capacity(n_downstairs),
+    );
+
+    for _ in 0..n_upstairs {
+        let (x, y) = empty_square(grid, rng);
+        upstairs.push((x, y));
+        grid[y as usize][x as usize] = DungeonTile::Upstair;
+    }
+
+    for _ in 0..n_downstairs {
+        let (x, y) = empty_square(grid, rng);
+        downstairs.push((x, y));
+        grid[y as usize][x as usize] = DungeonTile::Downstair;
+    }
+
+    (upstairs, downstairs)
+}
+
+/// Finds an unoccupied (floor) square of the level.
+fn empty_square(grid: &Grid<DungeonTile>, rng: &mut impl Rng) -> (i32, i32) {
+    loop {
+        let (x, y) = (rng.gen_range(0..grid.cols()), rng.gen_range(0..grid.rows()));
+
+        if grid[y][x] == DungeonTile::Floor {
+            break (x as _, y as _);
         }
     }
 }

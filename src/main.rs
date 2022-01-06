@@ -22,12 +22,13 @@ fn main() {
 
     let cfg = BranchConfig;
     let level = DungeonLevel::new(&cfg);
+    let spawn_pos = level.upstairs()[0];
 
     world.insert(level);
 
     world
         .create_entity()
-        .with(Position { x: 5, y: 6 })
+        .with(Position { x: spawn_pos.0, y: spawn_pos.1 })
         .with(CharRender { glyph: '@' })
         .with(Player)
         .with(Mobile {
@@ -49,16 +50,14 @@ fn main() {
     loop {
         dispatcher.dispatch(&world);
 
-        let players = world.read_storage::<Player>();
-        let turns = world.read_storage::<TurnTaker>();
-
-        if (&players, &turns).join().any(|(_plr, turn)| turn.next == 0) {
-            drop(players);
-            drop(turns);
+        if (
+            &world.read_storage::<Player>(),
+            &world.read_storage::<TurnTaker>(),
+        )
+            .join()
+            .any(|(_plr, turn)| turn.next == 0)
+        {
             player_turn(&mut world, &mut window);
-        } else {
-            drop(players);
-            drop(turns);
         }
     }
 }

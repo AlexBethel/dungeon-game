@@ -29,6 +29,12 @@ pub const LEVEL_SIZE: (usize, usize) = (80, 24);
 pub struct DungeonLevel {
     /// The tiles at every position in the level.
     tiles: [[DungeonTile; LEVEL_SIZE.0]; LEVEL_SIZE.1],
+
+    /// The location of each of the up-staircases.
+    upstairs: Vec<(i32, i32)>,
+
+    /// The location of each of the down-staircases.
+    downstairs: Vec<(i32, i32)>,
 }
 
 /// The smallest measurable independent location in the dungeon,
@@ -38,14 +44,31 @@ pub enum DungeonTile {
     Floor,
     Wall,
     Hallway,
+    Upstair,
+    Downstair,
 }
 
 impl DungeonLevel {
     /// Creates a new level in a branch that has the given
     /// configuration.
     pub fn new(_cfg: &BranchConfig) -> Self {
+        // Self {
+        //     tiles: rooms::generate_level(100, &mut rand::thread_rng()),
+        // }
+        rooms::generate_level(100, &mut rand::thread_rng(), 1, 1)
+    }
+
+    /// Creates a new level with the given set of tiles, upstairs, and
+    /// downstairs.
+    pub fn from_raw_parts(
+        tiles: [[DungeonTile; LEVEL_SIZE.0]; LEVEL_SIZE.1],
+        upstairs: Vec<(i32, i32)>,
+        downstairs: Vec<(i32, i32)>,
+    ) -> Self {
         Self {
-            tiles: rooms::generate_level(100, &mut rand::thread_rng()),
+            tiles,
+            upstairs,
+            downstairs,
         }
     }
 
@@ -100,6 +123,8 @@ impl DungeonLevel {
                 }
             }
             DungeonTile::Hallway => '#',
+            DungeonTile::Upstair => '<',
+            DungeonTile::Downstair => '>',
         }
     }
 
@@ -107,6 +132,16 @@ impl DungeonLevel {
     /// of the coordinates are out of bounds.
     pub fn tile(&self, x: i32, y: i32) -> &DungeonTile {
         &self.tiles[y as usize][x as usize]
+    }
+
+    /// Gets the list of up-stairs.
+    pub fn upstairs(&self) -> &[(i32, i32)] {
+        &self.upstairs
+    }
+
+    /// Gets the list of down-stairs.
+    pub fn downstairs(&self) -> &[(i32, i32)] {
+        &self.downstairs
     }
 }
 
