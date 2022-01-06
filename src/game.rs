@@ -98,6 +98,12 @@ impl DungeonLevel {
             DungeonTile::Hallway => '#',
         }
     }
+
+    /// Gets a reference to the tile at the given coordinates. Panics
+    /// of the coordinates are out of bounds.
+    pub fn tile(&self, x: i32, y: i32) -> &DungeonTile {
+        &self.tiles[y as usize][x as usize]
+    }
 }
 
 impl Display for DungeonLevel {

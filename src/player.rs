@@ -5,7 +5,7 @@ use specs::prelude::*;
 
 use crate::{
     components::{CharRender, MobAction, Mobile, Player, Position},
-    game::DungeonLevel,
+    game::{DungeonLevel, DungeonTile},
     quit,
 };
 
@@ -53,7 +53,9 @@ pub fn player_turn(ecs: &mut World, screen: &mut Window) {
         };
 
         if let Some(action) = action {
-            break action;
+            if possible(ecs, &action) {
+                break action;
+            }
         }
     };
 
@@ -61,6 +63,23 @@ pub fn player_turn(ecs: &mut World, screen: &mut Window) {
     let mut mobs = ecs.write_storage::<Mobile>();
     for (_plr, mob) in (&plrs, &mut mobs).join() {
         mob.next_action = action;
+    }
+}
+
+/// Checks whether an action is possible for the player to execute in
+/// the given world.
+fn possible(ecs: &World, action: &MobAction) -> bool {
+    match action {
+        MobAction::Nop => true,
+        MobAction::Move(dx, dy) => {
+            let players = ecs.read_storage::<Player>();
+            let positions = ecs.read_storage::<Position>();
+            let map = ecs.fetch::<DungeonLevel>();
+
+            (&players, &positions)
+                .join()
+                .all(|(_plr, pos)| map.tile(pos.x + dx, pos.y + dy) != &DungeonTile::Wall)
+        }
     }
 }
 
