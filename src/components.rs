@@ -30,10 +30,28 @@ pub struct TurnTaker {
     pub maximum: u32,
 }
 
+/// Entities that can move, attack other mobile entities, use items,
+/// etc.
+#[derive(Component)]
+pub struct Mobile {
+    pub next_action: MobAction,
+}
+
 /// Registers every existing component with the given ECS world.
 pub fn register_all(world: &mut World) {
     world.register::<Position>();
     world.register::<CharRender>();
     world.register::<Player>();
     world.register::<TurnTaker>();
+    world.register::<Mobile>();
+}
+
+/// An action that a mob can perform that takes up a turn.
+#[derive(Clone, Copy)]
+pub enum MobAction {
+    /// Do nothing.
+    Nop,
+
+    /// Physically move by the given vector.
+    Move(i32, i32),
 }

@@ -1,11 +1,16 @@
-use components::{register_all, CharRender, Player, Position, TurnTaker};
+use std::process::exit;
+
+use components::{register_all, CharRender, MobAction, Mobile, Player, Position, TurnTaker};
 use game::{BranchConfig, DungeonLevel};
 
+use pancurses::{endwin, initscr, noecho, Window};
+use player::player_turn;
 use specs::prelude::*;
-use systems::{IOSystem, TurnTickSystem};
+use systems::{MobSystem, TimeSystem};
 
 mod components;
 mod game;
+mod player;
 mod rooms;
 mod systems;
 mod util;
@@ -25,6 +30,9 @@ fn main() {
         .with(Position { x: 5, y: 6 })
         .with(CharRender { glyph: '@' })
         .with(Player)
+        .with(Mobile {
+            next_action: MobAction::Nop,
+        })
         .with(TurnTaker {
             next: 0,
             maximum: 10,
@@ -32,11 +40,49 @@ fn main() {
         .build();
 
     let mut dispatcher = DispatcherBuilder::new()
-        .with(TurnTickSystem, "turn_tick", &[])
-        .with(IOSystem::new(), "render", &["turn_tick"])
+        .with(TimeSystem, "time", &[])
+        .with(MobSystem, "mobs", &[])
         .build();
+
+    let mut window = init_window();
 
     loop {
         dispatcher.dispatch(&world);
+
+        let players = world.read_storage::<Player>();
+        let turns = world.read_storage::<TurnTaker>();
+
+        if (&players, &turns).join().any(|(_plr, turn)| turn.next == 0) {
+            drop(players);
+            drop(turns);
+            player_turn(&mut world, &mut window);
+        } else {
+            drop(players);
+            drop(turns);
+        }
     }
+}
+
+/// Initializes the terminal to accept user input, and creates a new
+/// Window.
+fn init_window() -> Window {
+    // Create a new window over the terminal.
+    let window = initscr();
+
+    // Enable keypad mode (off by default for historical reasons), so
+    // we can read special keycodes other than just characters.
+    window.keypad(true);
+
+    // Disable echoing so the user doesn't see flickering in the
+    // upper-left corner of the screen when they type a character.
+    noecho();
+
+    window
+}
+
+/// Cleans everything up and exits the game.
+fn quit() -> ! {
+    endwin();
+
+    exit(0)
 }
