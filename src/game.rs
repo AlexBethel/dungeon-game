@@ -64,35 +64,39 @@ impl DungeonLevel {
         match self.tiles[y][x] {
             DungeonTile::Floor => '.',
             DungeonTile::Wall => {
-                // Don't render walls with no adjacent floor space, to
-                // keep the screen clear. Aside from that, walls are
-                // '-' by default, unless the only adjacent floor is
-                // to the east or west, in which case they are '|'.
+                // Walls are rendered like so:
+                // - If the wall has any floor tiles to its north or
+                //   south, then it is rendered as '-', because it is
+                //   the north or south wall of a room.
+                // - Otherwise, if the wall has any floor tiles to its
+                //   east or west, then it is rendered as '|'.
+                // - Otherwise, if any floor tiles are diagonally
+                //   adjacent to the wall, then the wall is rendered as
+                //   '+', because it is in the corner of a room.
+                // - Otherwise, no floor tiles are adjacent to the
+                //   wall, therefore it is surrounded by stone and will
+                //   never be discovered by the player, so we don't
+                //   render it at all.
 
-                let neighborhood = (-1..=1)
-                    .flat_map(|row| (-1..=1).map(move |col| (col, row)))
-                    .filter(|&(dx, dy)| !(dx == 0 && dy == 0))
-                    .filter_map(|(dx, dy)| {
-                        let (x, y) = (
-                            usize::try_from(x as isize + dx).ok()?,
-                            usize::try_from(y as isize + dy).ok()?,
-                        );
-                        Some((x, y, self.tiles.get(y)?.get(x)?))
-                    })
-                    .collect::<Vec<(usize, usize, &DungeonTile)>>();
+                let has_floor = |deltas: &[(i32, i32)]| -> bool {
+                    deltas
+                        .iter()
+                        .map(|(dx, dy)| (x as i32 + dx, y as i32 + dy))
+                        .filter(|(x, y)| {
+                            (0..LEVEL_SIZE.0 as i32).contains(x)
+                                && (0..LEVEL_SIZE.1 as i32).contains(y)
+                        })
+                        .any(|(x, y)| self.tile(x, y) == &DungeonTile::Floor)
+                };
 
-                if neighborhood
-                    .iter()
-                    .all(|(_x, _y, tile)| *tile != &DungeonTile::Floor)
-                {
-                    ' '
-                } else if neighborhood
-                    .iter()
-                    .any(|(tile_x, _y, tile)| *tile_x == x && *tile == &DungeonTile::Floor)
-                {
+                if has_floor(&[(0, -1), (0, 1)]) {
                     '-'
-                } else {
+                } else if has_floor(&[(-1, 0), (1, 0)]) {
                     '|'
+                } else if has_floor(&[(-1, -1), (-1, 1), (1, -1), (1, 1)]) {
+                    '+'
+                } else {
+                    ' '
                 }
             }
             DungeonTile::Hallway => '#',
