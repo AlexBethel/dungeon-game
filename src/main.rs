@@ -1,7 +1,7 @@
 use std::process::exit;
 
 use components::{register_all, CharRender, MobAction, Mobile, Player, Position, TurnTaker};
-use game::{BranchConfig, DungeonLevel};
+use game::DungeonLevel;
 
 use pancurses::{endwin, initscr, noecho, Window};
 use player::player_turn;
@@ -20,8 +20,7 @@ fn main() {
 
     register_all(&mut world);
 
-    let cfg = BranchConfig;
-    let level = DungeonLevel::new(&cfg);
+    let level = DungeonLevel::new();
     let spawn_pos = level.upstairs()[0];
 
     world.insert(level);

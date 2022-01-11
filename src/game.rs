@@ -4,24 +4,6 @@ use pancurses::Window;
 
 use crate::rooms;
 
-/// A dungeon root.
-pub struct Dungeon {
-    main_branch: DungeonBranch,
-}
-
-/// A single branch of a dungeon, which has a number of levels and
-/// which can potentially contain passages to other branches.
-pub struct DungeonBranch {
-    config: BranchConfig,
-    levels: Vec<DungeonLevel>,
-}
-
-/// The parameters that characterize a particular dungeon branch.
-/// Currently a unit struct because there's only one type of branch,
-/// but will later include e.g. architectural styles, good vs. evil &
-/// lawful vs. chaotic weights, etc.
-pub struct BranchConfig;
-
 /// The size of a dungeon level, in tiles.
 pub const LEVEL_SIZE: (usize, usize) = (80, 24);
 
@@ -51,10 +33,7 @@ pub enum DungeonTile {
 impl DungeonLevel {
     /// Creates a new level in a branch that has the given
     /// configuration.
-    pub fn new(_cfg: &BranchConfig) -> Self {
-        // Self {
-        //     tiles: rooms::generate_level(100, &mut rand::thread_rng()),
-        // }
+    pub fn new() -> Self {
         rooms::generate_level(100, &mut rand::thread_rng(), 1, 1)
     }
 
