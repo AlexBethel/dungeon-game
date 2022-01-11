@@ -1,7 +1,7 @@
 use std::process::exit;
 
 use components::{register_all, CharRender, MobAction, Mobile, Player, Position, TurnTaker};
-use game::DungeonLevel;
+use level::DungeonLevel;
 
 use pancurses::{endwin, initscr, noecho, Window};
 use player::player_turn;
@@ -9,7 +9,7 @@ use specs::prelude::*;
 use systems::{MobSystem, TimeSystem};
 
 mod components;
-mod game;
+mod level;
 mod player;
 mod rooms;
 mod systems;

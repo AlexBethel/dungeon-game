@@ -20,7 +20,7 @@ use pathfinding::directed::astar::astar;
 use rand::Rng;
 
 use crate::{
-    game::{DungeonLevel, DungeonTile, LEVEL_SIZE},
+    level::{DungeonLevel, DungeonTile, LEVEL_SIZE},
     util::NiceFloat,
 };
 
