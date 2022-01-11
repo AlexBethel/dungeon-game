@@ -28,7 +28,10 @@ fn main() {
 
     world
         .create_entity()
-        .with(Position { x: spawn_pos.0, y: spawn_pos.1 })
+        .with(Position {
+            x: spawn_pos.0,
+            y: spawn_pos.1,
+        })
         .with(CharRender { glyph: '@' })
         .with(Player)
         .with(Mobile {
