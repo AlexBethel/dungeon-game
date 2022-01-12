@@ -78,7 +78,7 @@ fn possible(ecs: &World, action: &MobAction) -> bool {
 
             (&players, &positions)
                 .join()
-                .all(|(_plr, pos)| map.tile(pos.x + dx, pos.y + dy) != &DungeonTile::Wall)
+                .all(|(_plr, pos)| map.tile(pos.x + dx, pos.y + dy).is_navigable())
         }
     }
 }

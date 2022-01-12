@@ -30,6 +30,24 @@ pub enum DungeonTile {
     Downstair,
 }
 
+impl DungeonTile {
+    /// Whether this tile is considered a floor tile, for the purposes
+    /// of rendering walls.
+    pub fn is_floor(&self) -> bool {
+        match self {
+            DungeonTile::Wall => false,
+            DungeonTile::Hallway => false,
+            _ => true,
+        }
+    }
+
+    /// Whether this tile can be traveled through by normal
+    /// creatures.
+    pub fn is_navigable(&self) -> bool {
+        self.is_floor() || self == &DungeonTile::Hallway
+    }
+}
+
 impl DungeonLevel {
     /// Creates a new level in a branch that has the given
     /// configuration.
@@ -88,7 +106,7 @@ impl DungeonLevel {
                             (0..LEVEL_SIZE.0 as i32).contains(x)
                                 && (0..LEVEL_SIZE.1 as i32).contains(y)
                         })
-                        .any(|(x, y)| self.tile(x, y) == &DungeonTile::Floor)
+                        .any(|(x, y)| self.tile(x, y).is_floor())
                 };
 
                 if has_floor(&[(0, -1), (0, 1)]) {
