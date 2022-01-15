@@ -5,6 +5,7 @@ use level::DungeonLevel;
 
 use pancurses::{endwin, initscr, noecho, Window};
 use player::player_turn;
+use rand::thread_rng;
 use specs::prelude::*;
 use systems::{MobSystem, TimeSystem};
 
@@ -20,7 +21,7 @@ fn main() {
 
     register_all(&mut world);
 
-    let level = DungeonLevel::generate_level(&mut world);
+    let level = DungeonLevel::generate_level(&mut world, &mut thread_rng());
     let spawn_pos = level.upstairs[0];
 
     world.insert(level);

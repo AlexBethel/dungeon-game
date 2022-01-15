@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use pancurses::Window;
-use rand::{thread_rng, Rng};
+use rand::Rng;
 use specs::prelude::*;
 
 use crate::{
@@ -79,15 +79,15 @@ impl DungeonLevel {
     }
 
     /// Creates a new level and registers it with the given world.
-    pub fn generate_level(world: &mut World) -> LevelExits {
-        let level = rooms::generate_level(100, &mut thread_rng(), 1, 1);
+    pub fn generate_level(world: &mut World, rng: &mut impl Rng) -> LevelExits {
+        let level = rooms::generate_level(100, rng, 1, 1);
         world.insert(level.clone()); // inefficient but whatever
 
         // Spawn some zombies in the world.
         for _ in 0..20 {
             let (x, y) = (
-                thread_rng().gen_range(0..LEVEL_SIZE.0 as _),
-                thread_rng().gen_range(0..LEVEL_SIZE.1 as _),
+                rng.gen_range(0..LEVEL_SIZE.0 as _),
+                rng.gen_range(0..LEVEL_SIZE.1 as _),
             );
             if level.tile(x, y).is_navigable() {
                 world
