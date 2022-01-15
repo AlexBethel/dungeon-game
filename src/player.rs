@@ -5,7 +5,7 @@ use specs::prelude::*;
 
 use crate::{
     components::{CharRender, MobAction, Mobile, Player, Position},
-    level::{DungeonLevel, DungeonTile},
+    level::DungeonLevel,
     quit,
 };
 
