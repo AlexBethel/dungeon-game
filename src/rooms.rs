@@ -93,7 +93,7 @@ pub fn generate_level(
         *slot = value;
     }
 
-    DungeonLevel::from_raw_parts(data, upstairs, downstairs)
+    DungeonLevel::new(data, upstairs, downstairs)
 }
 
 /// The bounding box of a room.

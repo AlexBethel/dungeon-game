@@ -20,8 +20,8 @@ fn main() {
 
     register_all(&mut world);
 
-    let level = DungeonLevel::new();
-    let spawn_pos = level.upstairs()[0];
+    let level = DungeonLevel::generate_level(&mut world);
+    let spawn_pos = level.upstairs[0];
 
     world.insert(level);
 
