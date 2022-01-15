@@ -85,8 +85,6 @@ fn possible(ecs: &World, action: &MobAction) -> bool {
 
 /// Renders the state of the world onto the screen.
 fn render_screen(ecs: &mut World, screen: &mut Window) {
-    // screen.clear();
-
     // Draw the base level.
     let level = ecs.fetch::<DungeonLevel>();
     level.draw(screen);
@@ -98,8 +96,11 @@ fn render_screen(ecs: &mut World, screen: &mut Window) {
         screen.mvaddch(pos.y as _, pos.x as _, render.glyph);
     }
 
-    // Leave the cursor at the lower-left.
-    screen.mv(0, 0);
+    // Leave the cursor on the player's position.
+    let plrs = ecs.read_storage::<Player>();
+    let pos = ecs.read_storage::<Position>();
+    let (_plr, pos) = (&plrs, &pos).join().next().unwrap();
+    screen.mv(pos.y, pos.x);
 
     screen.refresh();
 }
