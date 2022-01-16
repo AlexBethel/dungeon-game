@@ -15,6 +15,7 @@ mod player;
 mod rooms;
 mod systems;
 mod util;
+mod visibility;
 
 fn main() {
     let mut world = World::new();

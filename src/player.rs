@@ -7,6 +7,7 @@ use crate::{
     components::{CharRender, MobAction, Mobile, Player, Position},
     level::DungeonLevel,
     quit,
+    visibility::{visible, CellVisibility, Lighting},
 };
 
 /// Runs a player turn on the ECS, using the given `screen` for input
@@ -85,9 +86,32 @@ fn possible(ecs: &World, action: &MobAction) -> bool {
 
 /// Renders the state of the world onto the screen.
 fn render_screen(ecs: &mut World, screen: &mut Window) {
+    // Calculate the player's position.
+    let plrs = ecs.read_storage::<Player>();
+    let pos = ecs.read_storage::<Position>();
+    let (_plr, player_pos) = (&plrs, &pos)
+        .join()
+        .next()
+        .expect("Player must have a position");
+
     // Draw the base level.
     let level = ecs.fetch::<DungeonLevel>();
-    level.draw(screen);
+    level.draw(screen, |cell| {
+        visible(
+            (player_pos.x, player_pos.y),
+            cell,
+            Some(10),
+            |(x, y)| {
+                if level.tile(x, y).is_navigable() {
+                    CellVisibility::Transparent
+                } else {
+                    CellVisibility::Blocking
+                }
+            },
+            // Level is fully lit for now.
+            |(_x, _y)| Lighting::Lit,
+        )
+    });
 
     // Draw all renderable entities.
     let renderables = ecs.read_storage::<CharRender>();
@@ -97,10 +121,7 @@ fn render_screen(ecs: &mut World, screen: &mut Window) {
     }
 
     // Leave the cursor on the player's position.
-    let plrs = ecs.read_storage::<Player>();
-    let pos = ecs.read_storage::<Position>();
-    let (_plr, pos) = (&plrs, &pos).join().next().unwrap();
-    screen.mv(pos.y, pos.x);
+    screen.mv(player_pos.y, player_pos.x);
 
     screen.refresh();
 }

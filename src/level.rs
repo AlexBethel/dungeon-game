@@ -101,12 +101,18 @@ impl DungeonLevel {
         level.exits
     }
 
-    /// Draws a level on the display window.
-    pub fn draw(&self, win: &Window) {
+    /// Draws a level on the display window. Draws only the cells for
+    /// which `filter` returns true; use `|_| true` to draw the whole
+    /// level.
+    pub fn draw(&self, win: &Window, filter: impl Fn((i32, i32)) -> bool) {
         for y in 0..LEVEL_SIZE.1 {
             win.mv(y as _, 0);
             for x in 0..LEVEL_SIZE.0 {
-                win.addch(self.render_tile(x, y));
+                win.addch(if filter((x as _, y as _)) {
+                    self.render_tile(x, y)
+                } else {
+                    ' '
+                });
             }
         }
     }
