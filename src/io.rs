@@ -44,14 +44,14 @@ pub fn quit() -> ! {
 /// The colors on a terminal.
 #[allow(unused)]
 pub enum Color {
-    Black = 0,
-    Red = 1,
-    Green = 2,
-    Brown = 3,
-    Blue = 4,
-    Magenta = 5,
-    Cyan = 6,
-    White = 7,
+    Black = pancurses::COLOR_BLACK as _,
+    Red = pancurses::COLOR_RED as _,
+    Green = pancurses::COLOR_GREEN as _,
+    Yellow = pancurses::COLOR_YELLOW as _,
+    Blue = pancurses::COLOR_BLUE as _,
+    Magenta = pancurses::COLOR_MAGENTA as _,
+    Cyan = pancurses::COLOR_CYAN as _,
+    White = pancurses::COLOR_WHITE as _,
 }
 
 #[derive(Error, Debug)]

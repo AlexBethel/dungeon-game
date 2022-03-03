@@ -106,7 +106,7 @@ impl DungeonLevel {
             win.mv(y as _, 0);
             for x in 0..LEVEL_SIZE.0 {
                 if (x + y) % 2 == 0 {
-                    set_color(win, Color::Cyan);
+                    set_color(win, Color::Yellow);
                 } else {
                     set_color(win, Color::Red);
                 }
