@@ -1,15 +1,14 @@
-use std::process::exit;
-
 use components::{register_all, CharRender, MobAction, Mobile, Player, Position, TurnTaker};
+use io::init_window;
 use level::DungeonLevel;
 
-use pancurses::{endwin, initscr, noecho, Window};
 use player::player_turn;
 use rand::thread_rng;
 use specs::prelude::*;
 use systems::{MobSystem, TimeSystem};
 
 mod components;
+mod io;
 mod level;
 mod player;
 mod rooms;
@@ -64,28 +63,4 @@ fn main() {
             player_turn(&mut world, &mut window);
         }
     }
-}
-
-/// Initializes the terminal to accept user input, and creates a new
-/// Window.
-fn init_window() -> Window {
-    // Create a new window over the terminal.
-    let window = initscr();
-
-    // Enable keypad mode (off by default for historical reasons), so
-    // we can read special keycodes other than just characters.
-    window.keypad(true);
-
-    // Disable echoing so the user doesn't see flickering in the
-    // upper-left corner of the screen when they type a character.
-    noecho();
-
-    window
-}
-
-/// Cleans everything up and exits the game.
-fn quit() -> ! {
-    endwin();
-
-    exit(0)
 }

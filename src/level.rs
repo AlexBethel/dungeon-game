@@ -4,10 +4,7 @@ use pancurses::Window;
 use rand::Rng;
 use specs::prelude::*;
 
-use crate::{
-    components::{CharRender, Position},
-    rooms,
-};
+use crate::{components::{CharRender, Position}, io::{Color, set_color}, rooms};
 
 /// The size of a dungeon level, in tiles.
 pub const LEVEL_SIZE: (usize, usize) = (80, 24);
@@ -108,6 +105,12 @@ impl DungeonLevel {
         for y in 0..LEVEL_SIZE.1 {
             win.mv(y as _, 0);
             for x in 0..LEVEL_SIZE.0 {
+                if (x + y) % 2 == 0 {
+                    set_color(win, Color::Cyan);
+                } else {
+                    set_color(win, Color::Red);
+                }
+
                 win.addch(if filter((x as _, y as _)) {
                     self.render_tile(x, y)
                 } else {
