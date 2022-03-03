@@ -48,7 +48,13 @@ fn main() {
         .with(MobSystem, "mobs", &[])
         .build();
 
-    let mut window = init_window();
+    let mut window = match init_window() {
+        Ok(window) => window,
+        Err(err) => {
+            println!("Error initializing window: {}", err);
+            return;
+        },
+    };
 
     loop {
         dispatcher.dispatch(&world);

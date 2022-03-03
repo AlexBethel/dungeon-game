@@ -10,7 +10,7 @@ use thiserror::Error;
 
 /// Initializes the terminal to accept user input, and creates a new
 /// Window.
-pub fn init_window() -> Window {
+pub fn init_window() -> Result<Window, ColorError> {
     // Create a new window over the terminal.
     let window = initscr();
 
@@ -22,16 +22,10 @@ pub fn init_window() -> Window {
     // upper-left corner of the screen when they type a character.
     noecho();
 
-    // // Set up a color palette. TODO
-    // init_colors().unwrap();
-    let c = init_colors();
-    if let Err(e) = c {
-        endwin();
-        println!("{}", e);
-        panic!();
-    }
+    // Set up a color palette.
+    init_colors()?;
 
-    window
+    Ok(window)
 }
 
 /// Cleans everything up and exits the game.
@@ -55,7 +49,7 @@ pub enum Color {
 }
 
 #[derive(Error, Debug)]
-enum ColorError {
+pub enum ColorError {
     #[error("colors not supported")]
     NoColors,
 
