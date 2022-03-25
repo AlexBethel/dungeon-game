@@ -243,7 +243,7 @@ fn add_hallways(grid: &mut Grid<DungeonTile>, rooms: &[RoomBounds], rng: &mut im
 
         for (x, y) in path {
             if grid[y][x] == DungeonTile::Wall {
-                grid[y][x] = DungeonTile::Hallway;
+                grid[y][x] = DungeonTile::Floor;
             }
         }
     }

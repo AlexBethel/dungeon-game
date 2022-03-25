@@ -35,7 +35,6 @@ pub struct LevelExits {
 pub enum DungeonTile {
     Floor,
     Wall,
-    Hallway,
     Upstair,
     Downstair,
 }
@@ -46,7 +45,6 @@ impl DungeonTile {
     pub fn is_floor(&self) -> bool {
         match self {
             DungeonTile::Wall => false,
-            DungeonTile::Hallway => false,
             _ => true,
         }
     }
@@ -54,7 +52,7 @@ impl DungeonTile {
     /// Whether this tile can be traveled through by normal
     /// creatures.
     pub fn is_navigable(&self) -> bool {
-        self.is_floor() || self == &DungeonTile::Hallway
+        self.is_floor()
     }
 }
 
@@ -160,7 +158,6 @@ impl DungeonLevel {
                     ' '
                 }
             }
-            DungeonTile::Hallway => '#',
             DungeonTile::Upstair => '<',
             DungeonTile::Downstair => '>',
         }
