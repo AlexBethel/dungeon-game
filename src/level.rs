@@ -4,7 +4,12 @@ use pancurses::Window;
 use rand::Rng;
 use specs::prelude::*;
 
-use crate::{components::{CharRender, Position}, io::{Color, set_color}, rooms};
+use crate::{
+    components::{CharRender, Position},
+    io::{set_color, Color},
+    rooms,
+    visibility::{visible, CellVisibility, Lighting},
+};
 
 /// The size of a dungeon level, in tiles.
 pub const LEVEL_SIZE: (usize, usize) = (80, 24);
@@ -37,6 +42,23 @@ pub enum DungeonTile {
     Wall,
     Upstair,
     Downstair,
+}
+
+/// A style for drawing a particular tile in the dungeon.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum DrawStyle {
+    /// Don't draw the tile. (The player has never seen this tile
+    /// before, and is unaware of its contents.)
+    Undiscovered,
+
+    /// Draw the tile in a darker color than normal. (The player has
+    /// seen this tile before and remembers its contents, but is not
+    /// actively looking at it.)
+    Discovered,
+
+    /// Draw the tile in a normal color. (The player can see the tile
+    /// from where they are standing.)
+    Visible,
 }
 
 impl DungeonTile {
@@ -99,20 +121,22 @@ impl DungeonLevel {
     /// Draws a level on the display window. Draws only the cells for
     /// which `filter` returns true; use `|_| true` to draw the whole
     /// level.
-    pub fn draw(&self, win: &Window, filter: impl Fn((i32, i32)) -> bool) {
+    pub fn draw(&self, win: &Window, visibility: impl Fn((i32, i32)) -> DrawStyle) {
         for y in 0..LEVEL_SIZE.1 {
             win.mv(y as _, 0);
             for x in 0..LEVEL_SIZE.0 {
-                if (x + y) % 2 == 0 {
-                    set_color(win, Color::Yellow);
-                } else {
-                    set_color(win, Color::Red);
-                }
-
-                win.addch(if filter((x as _, y as _)) {
-                    self.render_tile(x, y)
-                } else {
-                    ' '
+                win.addch(match visibility((x as _, y as _)) {
+                    DrawStyle::Undiscovered => ' ',
+                    DrawStyle::Discovered => {
+                        // Using red as a placeholder; black doesn't
+                        // seem to work rn(?)
+                        set_color(win, Color::Red);
+                        self.render_tile(x, y)
+                    }
+                    DrawStyle::Visible => {
+                        set_color(win, Color::White);
+                        self.render_tile(x, y)
+                    }
                 });
             }
         }
@@ -167,6 +191,25 @@ impl DungeonLevel {
     /// of the coordinates are out of bounds.
     pub fn tile(&self, x: i32, y: i32) -> &DungeonTile {
         &self.tiles[y as usize][x as usize]
+    }
+
+    /// Whether a monster standing at `from` can see the contents of cell
+    /// `to`.
+    pub fn can_see(&self, from: (i32, i32), to: (i32, i32)) -> bool {
+        visible(
+            from,
+            to,
+            Some(10),
+            |(x, y)| {
+                if self.tile(x, y).is_navigable() {
+                    CellVisibility::Transparent
+                } else {
+                    CellVisibility::Blocking
+                }
+            },
+            // Level is fully lit for now.
+            |(_x, _y)| Lighting::Lit,
+        )
     }
 }
 

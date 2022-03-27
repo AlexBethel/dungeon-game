@@ -14,10 +14,9 @@ pub enum CellVisibility {
 /// How well-lit a cell is.
 #[derive(Debug, PartialEq)]
 pub enum Lighting {
-    /// Monsters can only see in this cell if the cell is immediately
-    /// adjacent to the monster.
-    Dark,
-
+    // /// Monsters can only see in this cell if the cell is immediately
+    // /// adjacent to the monster.
+    // Dark,
     /// Monsters can see in this cell from far away.
     Lit,
 }

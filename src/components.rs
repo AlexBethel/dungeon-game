@@ -16,9 +16,12 @@ pub struct CharRender {
     pub glyph: char,
 }
 
-/// Entities that the user can control using the keyboard.
+/// Entities that users can control.
 #[derive(Component)]
-pub struct Player;
+pub struct Player {
+    /// The list of cells that are known to the player.
+    pub known_cells: Vec<Vec<bool>>,
+}
 
 /// Entities that take turns periodically.
 #[derive(Component)]
@@ -44,6 +47,18 @@ pub fn register_all(world: &mut World) {
     world.register::<Player>();
     world.register::<TurnTaker>();
     world.register::<Mobile>();
+}
+
+impl From<&Position> for (i32, i32) {
+    fn from(pos: &Position) -> Self {
+        (pos.x, pos.y)
+    }
+}
+
+impl From<(i32, i32)> for Position {
+    fn from((x, y): (i32, i32)) -> Self {
+        Self { x, y }
+    }
 }
 
 /// An action that a mob can perform that takes up a turn.

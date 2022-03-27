@@ -1,11 +1,11 @@
 use components::{register_all, CharRender, MobAction, Mobile, Player, Position, TurnTaker};
 use io::init_window;
-use level::DungeonLevel;
+use level::{DungeonLevel, LEVEL_SIZE};
 
 use player::player_turn;
 use rand::thread_rng;
 use specs::prelude::*;
-use systems::{MobSystem, TimeSystem};
+use systems::{DiscoverySystem, MobSystem, TimeSystem};
 
 mod components;
 mod io;
@@ -28,12 +28,13 @@ fn main() {
 
     world
         .create_entity()
-        .with(Position {
-            x: spawn_pos.0,
-            y: spawn_pos.1,
-        })
+        .with(Position::from(spawn_pos))
         .with(CharRender { glyph: '@' })
-        .with(Player)
+        .with(Player {
+            known_cells: (0..LEVEL_SIZE.1)
+                .map(|_| (0..LEVEL_SIZE.0).map(|_| false).collect())
+                .collect(),
+        })
         .with(Mobile {
             next_action: MobAction::Nop,
         })
@@ -46,6 +47,7 @@ fn main() {
     let mut dispatcher = DispatcherBuilder::new()
         .with(TimeSystem, "time", &[])
         .with(MobSystem, "mobs", &[])
+        .with(DiscoverySystem, "discovery", &[])
         .build();
 
     let mut window = match init_window() {
@@ -53,7 +55,7 @@ fn main() {
         Err(err) => {
             println!("Error initializing window: {}", err);
             return;
-        },
+        }
     };
 
     loop {

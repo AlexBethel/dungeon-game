@@ -2,7 +2,10 @@
 
 use specs::prelude::*;
 
-use crate::components::{MobAction, Mobile, Position, TurnTaker};
+use crate::{
+    components::{MobAction, Mobile, Player, Position, TurnTaker},
+    level::DungeonLevel,
+};
 
 /// System for ticking the turn counter on every entity; this system
 /// implements the relationship between real-world time and in-game
@@ -43,6 +46,29 @@ impl<'a> System<'a> for MobSystem {
             }
 
             mob.next_action = MobAction::Nop;
+        }
+    }
+}
+
+/// System for updating player-discovered cells.
+pub struct DiscoverySystem;
+
+impl<'a> System<'a> for DiscoverySystem {
+    type SystemData = (
+        WriteStorage<'a, Player>,
+        ReadStorage<'a, Position>,
+        ReadExpect<'a, DungeonLevel>,
+    );
+
+    fn run(&mut self, (mut players, position, level): Self::SystemData) {
+        for (player, pos) in (&mut players, &position).join() {
+            for (y, row) in player.known_cells.iter_mut().enumerate() {
+                for (x, known) in row.iter_mut().enumerate() {
+                    if level.can_see(pos.into(), (x as _, y as _)) {
+                        *known = true;
+                    }
+                }
+            }
         }
     }
 }

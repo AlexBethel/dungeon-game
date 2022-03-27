@@ -5,9 +5,8 @@ use specs::prelude::*;
 
 use crate::{
     components::{CharRender, MobAction, Mobile, Player, Position},
-    level::DungeonLevel,
     io::quit,
-    visibility::{visible, CellVisibility, Lighting},
+    level::{DrawStyle, DungeonLevel},
 };
 
 /// Runs a player turn on the ECS, using the given `screen` for input
@@ -96,21 +95,18 @@ fn render_screen(ecs: &mut World, screen: &mut Window) {
 
     // Draw the base level.
     let level = ecs.fetch::<DungeonLevel>();
+    let known_cells = &plrs.join().next().expect("Player must exist").known_cells;
     level.draw(screen, |cell| {
-        visible(
-            (player_pos.x, player_pos.y),
-            cell,
-            Some(10),
-            |(x, y)| {
-                if level.tile(x, y).is_navigable() {
-                    CellVisibility::Transparent
+        match level.can_see(player_pos.into(), cell) {
+            true => DrawStyle::Visible,
+            false => {
+                if known_cells[cell.1 as usize][cell.0 as usize] {
+                    DrawStyle::Discovered
                 } else {
-                    CellVisibility::Blocking
+                    DrawStyle::Undiscovered
                 }
-            },
-            // Level is fully lit for now.
-            |(_x, _y)| Lighting::Lit,
-        )
+            }
+        }
     });
 
     // Draw all renderable entities.
