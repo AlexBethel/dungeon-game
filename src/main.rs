@@ -5,7 +5,7 @@ use level::{DungeonLevel, LEVEL_SIZE};
 use player::player_turn;
 use rand::thread_rng;
 use specs::prelude::*;
-use systems::{DiscoverySystem, MobSystem, TimeSystem};
+use systems::build_dispatcher;
 
 mod components;
 mod io;
@@ -44,11 +44,7 @@ fn main() {
         })
         .build();
 
-    let mut dispatcher = DispatcherBuilder::new()
-        .with(TimeSystem, "time", &[])
-        .with(MobSystem, "mobs", &[])
-        .with(DiscoverySystem, "discovery", &[])
-        .build();
+    let mut dispatcher = build_dispatcher();
 
     let mut window = match init_window() {
         Ok(window) => window,

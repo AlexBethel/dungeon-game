@@ -72,3 +72,12 @@ impl<'a> System<'a> for DiscoverySystem {
         }
     }
 }
+
+/// Creates a Dispatcher with every system set up.
+pub fn build_dispatcher() -> Dispatcher<'static, 'static> {
+    DispatcherBuilder::new()
+        .with(TimeSystem, "time", &[])
+        .with(MobSystem, "mobs", &[])
+        .with(DiscoverySystem, "discovery", &[])
+        .build()
+}
